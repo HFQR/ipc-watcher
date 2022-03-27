@@ -1,4 +1,4 @@
-use std::marker::PhantomData;
+use std::{marker::PhantomData, mem};
 
 use raw_sync::locks::{LockImpl, LockInit, RwLock};
 use shared_memory::Shmem;
@@ -36,6 +36,15 @@ impl<'a, T> Shared<'a, T> {
     where
         F: FnOnce(*mut u8, usize) -> Box<dyn LockImpl>,
     {
+        // Check for the size of shared memory.
+        let shared_size = mem::size_of::<Self>();
+        let mem_size = mem.len();
+        assert!(
+            shared_size <= mem_size,
+            "Shared memory not enough, {} extra bytes needed",
+            shared_size - mem_size
+        );
+
         let mut ptr = mem.as_ptr();
 
         // SAFETY:
