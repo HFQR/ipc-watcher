@@ -3,6 +3,17 @@ name = "ipc-watcher"
 version = "0.1.0"
 edition = "2021"
 
+[[example]]
+name = "watched"
+path = "./examples/watched.rs"
+
+[[example]]
+name = "watcher"
+path = "./examples/watcher.rs"
+
 [dependencies]
 raw_sync = "0.1.5"
 shared_memory = "0.12.4"
+
+[dev-dependencies]
+ctrlc = "3.2.1"

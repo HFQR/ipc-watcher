@@ -119,7 +119,7 @@ mod test {
 
             assert!(watcher.has_changed());
 
-            watcher.read(|foo| println!("foo is {:?}", foo));
+            watcher.read(|foo| assert_eq!(foo.0.len(), 512));
         })
         .join()
         .unwrap();
@@ -146,5 +146,31 @@ mod test {
     fn size_check() {
         let mut mem = shared_memory_create("./test_file3", 20).unwrap();
         let _watched = Watched::<Foo>::new_from_mem(&mut mem);
+    }
+
+    // *. This exmaple only work in the same process.
+    // Expect segfault when trying to shared Rust allocation type directly.
+    #[test]
+    fn allocated_type() {
+        #[repr(C)]
+        #[derive(Debug)]
+        struct BoxedFoo(Box<[u8]>);
+
+        let mut mem = shared_memory_create("./test_file4", 24).unwrap();
+        let watched = Watched::<BoxedFoo>::new_from_mem(&mut mem);
+
+        watched.write(BoxedFoo(vec![123; 512].into_boxed_slice()));
+
+        std::thread::spawn(|| {
+            let mut mem = shared_memory_open("./test_file4", 24).unwrap();
+
+            let mut watcher = Watcher::<BoxedFoo>::new_from_mem(&mut mem);
+
+            assert!(watcher.has_changed());
+
+            watcher.read(|foo| assert_eq!(foo.0.len(), 512));
+        })
+        .join()
+        .unwrap();
     }
 }
