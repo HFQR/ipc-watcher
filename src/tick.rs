@@ -3,6 +3,7 @@ use std::{
     sync::atomic::{AtomicU8, Ordering},
 };
 
+// important. Tick must have the same layout of inner atomic counter.
 #[repr(transparent)]
 pub(crate) struct Tick<'a>(&'a mut AtomicU8);
 
@@ -14,7 +15,7 @@ impl<'a> Tick<'a> {
     // Caller must make sure given pointer is valid for the lifetime of Tick.
     pub(crate) unsafe fn from_ptr(ptr: *mut u8) -> (Self, usize) {
         let atomic_size = mem::size_of::<Self>();
-        let tick = Tick(&mut *(ptr as *mut u8 as *mut AtomicU8));
+        let tick = Tick(&mut *(ptr as *mut AtomicU8));
 
         (tick, atomic_size)
     }

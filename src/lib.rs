@@ -65,7 +65,6 @@ impl<'a, T> Watcher<'a, T> {
     /// The given [Shmem] must contain an already initialized [Watched] value.
     pub fn new_from_mem(mem: &'a mut Shmem) -> Self {
         let shared = Shared::exist_from_mem(mem);
-
         Watcher { tick: 0, shared }
     }
 
@@ -99,7 +98,7 @@ mod test {
 
     #[repr(C)]
     #[derive(Debug)]
-    struct Foo([u8; 256]);
+    struct Foo([u8; 512]);
 
     #[test]
     fn works() {
@@ -107,7 +106,7 @@ mod test {
 
         let watched = Watched::<Foo>::new_from_mem(&mut mem);
 
-        watched.write(Foo([123; 256]));
+        watched.write(Foo([123; 512]));
 
         std::thread::spawn(|| {
             let mut mem = shared_memory_open("./test_file", 24).unwrap();
@@ -142,6 +141,6 @@ mod test {
     #[should_panic]
     fn size_check() {
         let mut mem = shared_memory_create("./test_file3", 20).unwrap();
-        let watched = Watched::<Foo>::new_from_mem(&mut mem);
+        let _watched = Watched::<Foo>::new_from_mem(&mut mem);
     }
 }
