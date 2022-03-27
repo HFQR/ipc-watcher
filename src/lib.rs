@@ -125,15 +125,11 @@ mod test {
     #[test]
     #[should_panic]
     fn drop_watched() {
-        std::thread::spawn(|| {
-            let mut mem = shared_memory_create("./test_file2", 4096).unwrap();
+        let mut mem = shared_memory_create("./test_file2", 4096).unwrap();
 
-            let watched = Watched::<Foo>::new_from_mem(&mut mem);
+        let watched = Watched::<Foo>::new_from_mem(&mut mem);
 
-            drop(watched);
-        })
-        .join()
-        .unwrap();
+        drop(watched);
 
         let mut mem = shared_memory_open("./test_file2", 4096).unwrap();
 

@@ -34,7 +34,7 @@ impl<'a> Tick<'a> {
 
     pub(crate) fn try_get(&self) -> Option<u8> {
         let val = self.0.load(Ordering::SeqCst);
-        if val & 1 == val {
+        if val & 1 == 1 {
             None
         } else {
             Some(val)
