@@ -103,14 +103,14 @@ mod test {
 
     #[test]
     fn works() {
-        let mut mem = shared_memory_create("./test_file", 4096).unwrap();
+        let mut mem = shared_memory_create("./test_file", 24).unwrap();
 
         let watched = Watched::<Foo>::new_from_mem(&mut mem);
 
         watched.write(Foo([123; 256]));
 
         std::thread::spawn(|| {
-            let mut mem = shared_memory_open("./test_file", 4096).unwrap();
+            let mut mem = shared_memory_open("./test_file", 24).unwrap();
 
             let mut watcher = Watcher::<Foo>::new_from_mem(&mut mem);
 
@@ -125,16 +125,23 @@ mod test {
     #[test]
     #[should_panic]
     fn drop_watched() {
-        let mut mem = shared_memory_create("./test_file2", 4096).unwrap();
+        let mut mem = shared_memory_create("./test_file2", 24).unwrap();
 
         let watched = Watched::<Foo>::new_from_mem(&mut mem);
 
         drop(watched);
 
-        let mut mem = shared_memory_open("./test_file2", 4096).unwrap();
+        let mut mem = shared_memory_open("./test_file2", 24).unwrap();
 
         let mut watcher = Watcher::<Foo>::new_from_mem(&mut mem);
 
         watcher.has_changed();
+    }
+
+    #[test]
+    #[should_panic]
+    fn size_check() {
+        let mut mem = shared_memory_create("./test_file3", 20).unwrap();
+        let watched = Watched::<Foo>::new_from_mem(&mut mem);
     }
 }
