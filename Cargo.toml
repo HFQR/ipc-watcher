@@ -1,0 +1,8 @@
+[package]
+name = "ipc-watcher"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+raw_sync = "0.1.5"
+shared_memory = "0.12.4"
