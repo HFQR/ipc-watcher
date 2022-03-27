@@ -1,3 +1,7 @@
+//! A simple IPC libarary that share Rust type safetly.
+//! One watched process can write and update the snapshot of state.
+//! Multiple wwatcher processes can read the state and be aware of state change.
+
 mod error;
 mod shared;
 mod tick;
