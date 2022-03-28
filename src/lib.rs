@@ -1,6 +1,6 @@
-//! A simple IPC libarary that share Rust type safetly.
+//! A simple IPC libarary that share Rust type safetly between processes.
 //! One watched process can write and update the snapshot of state.
-//! Multiple wwatcher processes can read the state and be aware of state change.
+//! Multiple wwatcher processes can read the state and aware of state change.
 
 mod error;
 mod shared;
@@ -13,7 +13,7 @@ use shared_memory::{Shmem, ShmemConf};
 use crate::{error::Error, shared::Shared};
 
 /// Create shared memory with given path and size.
-/// *. If the path is already exist it would OVERWRITE the original file.
+/// *. If the path is already exist it would `OVERWRITE` the original file.
 pub fn shared_memory_create(path: impl AsRef<Path>, size: usize) -> Result<Shmem, Error> {
     let mut mem = ShmemConf::new()
         .size(size)
@@ -73,7 +73,7 @@ impl<'a, T> Watcher<'a, T> {
     }
 
     /// Obtain a read lock and access &T through a closure.
-    /// Closure is expected to be non blocking and kept as shortest in execute time as possible.
+    /// Closure is expected to be non blocking and kept as shortest in execution time as possible.
     pub fn read<F, O>(&self, func: F) -> O
     where
         F: FnOnce(&T) -> O,
@@ -83,8 +83,13 @@ impl<'a, T> Watcher<'a, T> {
         func(val)
     }
 
-    /// Observe the value change of `T`.
-    /// `read` is method is expected to be called immediately when true returns.
+    /// Observe the value change of T.
+    /// [Watcher::read] method is expected to be called immediately when true returns.
+    ///
+    /// # panics:
+    ///
+    /// When [Watched] value is gone. Happen when the process owning [Watched] decide to
+    /// destroy the value.
     pub fn has_changed(&mut self) -> bool {
         let tick_new = self.shared.tick.try_get().expect("Watched value is gone");
         if tick_new != self.tick {
@@ -148,8 +153,8 @@ mod test {
         let _watched = Watched::<Foo>::new_from_mem(&mut mem);
     }
 
-    // *. This exmaple only work in the same process.
-    // Expect segfault when trying to shared Rust allocation type directly.
+    // *. This test only work in the same process.
+    // Expect segfault when trying to share Box between processes.
     #[test]
     fn allocated_type() {
         #[repr(C)]
