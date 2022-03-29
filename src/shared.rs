@@ -5,13 +5,13 @@ use shared_memory::Shmem;
 
 use crate::tick::Tick;
 
-pub(crate) struct Shared<'a, T> {
+pub(crate) struct Shared<'a, T: Copy> {
     pub(crate) tick: Tick<'a>,
     pub(crate) lock: Box<dyn LockImpl>,
     data: PhantomData<T>,
 }
 
-impl<'a, T> Shared<'a, T> {
+impl<'a, T: Copy> Shared<'a, T> {
     pub(crate) fn new_from_mem(mem: &'a Shmem) -> Self {
         Self::from_mem(mem, |ptr, data_off| unsafe {
             // SAFETY:

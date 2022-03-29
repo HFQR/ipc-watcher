@@ -4,6 +4,7 @@ use std::sync::mpsc::sync_channel;
 
 use ipc_watcher::{shared_memory_create, Watched};
 
+#[derive(Clone, Copy)]
 struct State([u8; 8]);
 
 fn main() {

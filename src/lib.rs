@@ -30,15 +30,15 @@ pub fn shared_memory_open(path: impl AsRef<Path>, size: usize) -> Result<Shmem, 
     Ok(mem)
 }
 
-pub struct Watched<'a, T>(Shared<'a, T>);
+pub struct Watched<'a, T: Copy>(Shared<'a, T>);
 
-impl<T> Drop for Watched<'_, T> {
+impl<T: Copy> Drop for Watched<'_, T> {
     fn drop(&mut self) {
         self.0.tick.close();
     }
 }
 
-impl<'a, T> Watched<'a, T> {
+impl<'a, T: Copy> Watched<'a, T> {
     /// Construct a new watched value in given [Shmem].
     pub fn new_from_mem(mem: &'a mut Shmem) -> Self {
         let shared = Shared::new_from_mem(mem);
@@ -59,12 +59,12 @@ impl<'a, T> Watched<'a, T> {
     }
 }
 
-pub struct Watcher<'a, T> {
+pub struct Watcher<'a, T: Copy> {
     tick: u8,
     shared: Shared<'a, T>,
 }
 
-impl<'a, T> Watcher<'a, T> {
+impl<'a, T: Copy> Watcher<'a, T> {
     /// Construct a new observer from given [Shmem].
     /// The given [Shmem] must contain an already initialized [Watched] value.
     pub fn new_from_mem(mem: &'a mut Shmem) -> Self {
@@ -106,7 +106,7 @@ mod test {
     use super::*;
 
     #[repr(C)]
-    #[derive(Debug)]
+    #[derive(Clone, Copy, Debug)]
     struct Foo([u8; 512]);
 
     #[test]
@@ -151,31 +151,5 @@ mod test {
     fn size_check() {
         let mut mem = shared_memory_create("./test_file3", 20).unwrap();
         let _watched = Watched::<Foo>::new_from_mem(&mut mem);
-    }
-
-    // *. This test only work in the same process.
-    // Expect segfault when trying to share Box between processes.
-    #[test]
-    fn allocated_type() {
-        #[repr(C)]
-        #[derive(Debug)]
-        struct BoxedFoo(Box<[u8]>);
-
-        let mut mem = shared_memory_create("./test_file4", 24).unwrap();
-        let watched = Watched::<BoxedFoo>::new_from_mem(&mut mem);
-
-        watched.write(BoxedFoo(vec![123; 512].into_boxed_slice()));
-
-        std::thread::spawn(|| {
-            let mut mem = shared_memory_open("./test_file4", 24).unwrap();
-
-            let mut watcher = Watcher::<BoxedFoo>::new_from_mem(&mut mem);
-
-            assert!(watcher.has_changed());
-
-            watcher.read(|foo| assert_eq!(foo.0.len(), 512));
-        })
-        .join()
-        .unwrap();
     }
 }

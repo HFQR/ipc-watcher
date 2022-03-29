@@ -2,6 +2,7 @@
 
 use ipc_watcher::{shared_memory_open, Watcher};
 
+#[derive(Clone, Copy)]
 struct State([u8; 8]);
 
 fn main() {
